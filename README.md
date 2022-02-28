@@ -1,18 +1,18 @@
 # Задание # 1
 1. Terraform <br>
-![terraform](/opt/sysadm-homeworks/sysadm-homeworks/01-intro-01/img_new/terraform.png) <br>
+![terraform](/opt/devops-netology/img_new/terraform.png) <br>
 
 2. Bash <br>
-![markdown](/opt/sysadm-homeworks/sysadm-homeworks/01-intro-01/img_new/bash.png) <br>
+![markdown](/opt/devops-netology/img_new/bash.png) <br>
 
 3. Markdown <br>
-![markdown](/opt/sysadm-homeworks/sysadm-homeworks/01-intro-01/img_new/markdown.png) <br>
+![markdown](/opt/devops-netology/img_new/markdown.png) <br>
 
 4. Yaml <br>
-![yaml](/opt/sysadm-homeworks/sysadm-homeworks/01-intro-01/img_new/yaml.png) <br>
+![yaml](/opt/devops-netology/img_new/yaml.png) <br>
 
 5. Jsonnet <br>
-![jsonnet](/opt/sysadm-homeworks/sysadm-homeworks/01-intro-01/img_new/jsonnet.png) <br>
+![jsonnet](/opt/devops-netology/img_new/jsonnet.png) <br>
 
 # Задание # 2
 
@@ -20,3 +20,4 @@
 2. Этап разработки. Команда разработки пишет код, проводят код ревью, пишут тесты. Они используют git (или другую систему контроля версий) для распараллеливания процесса. Девопс участвует в настройке системы контроля версий, автоматизирует тестирование, выстраивает инфраструктуру, которая позволяет настроить процессы CI
 3. Этап ввода в эксплуатацию. Девопс настраивает процесс автоматического деплоя приложений. 
 Использование. Девопс настраивает системы для автоматического оповещения о проблемах, произошедших с приложением или серверами. Стремятся снизить даунтайм до 0. Команда отслеживает произошедшие ошибки. И стараются быстро их исследовать и исправить.
+
