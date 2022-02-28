@@ -1,18 +1,18 @@
 # Задание # 1
 1. Terraform <br>
-![terraform](/opt/devops-netology/img_new/terraform.png) <br>
+![terraform](/img_new/terraform.png) <br>
 
 2. Bash <br>
-![markdown](/opt/devops-netology/img_new/bash.png) <br>
+![markdown](/img_new/bash.png) <br>
 
 3. Markdown <br>
-![markdown](/opt/devops-netology/img_new/markdown.png) <br>
+![markdown](/img_new/markdown.png) <br>
 
 4. Yaml <br>
-![yaml](/opt/devops-netology/img_new/yaml.png) <br>
+![yaml](/img_new/yaml.png) <br>
 
 5. Jsonnet <br>
-![jsonnet](/opt/devops-netology/img_new/jsonnet.png) <br>
+![jsonnet](/img_new/jsonnet.png) <br>
 
 # Задание # 2
 
