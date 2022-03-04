@@ -9,3 +9,5 @@
 #6. файлы с названиями override.tf и override.tf.json
 #7. файлы, заканчивающиеся на _override.tf, _override.tf.json
 #8. файлы с расширением terraformrc и файл terraform.rc
+
+new line for task 3
