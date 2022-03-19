@@ -222,3 +222,63 @@ $ git log -1 --format="%P" b8d720
     5ac311e2a Martin Atkins Wed May 3 16:25:41 2017 -0700 main: synchronize writes to VT100-faker on Windows
 
 Автор в данном случае очевидно Martin Atkins, а James Bardin наоборот ее удалил
+
+# 3.1. Работа в терминале, лекция 1
+
+1. \+  
+2. Только с включенным vpn  
+
+    ```
+    $ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -  
+    $ sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"  
+    $ sudo apt-get update && sudo apt-get install vagrant   
+    ```
+
+3. \+
+4. \+
+5. RAM:1024mb  
+CPU:2 cpu  
+HDD:64gb  
+video:4mb  
+6. добавить комманды в VagrantFile:  
+```
+  v.memory = 1024  
+  v.cpus = 2
+```
+7. \+
+8. Ознакомиться с разделами `man bash`, почитать о настройках самого bash: 
+   1. `HISTFILESIZE` - The maximum number of lines contained in the history file   
+      строка 1155/6175  
+   `HISTSIZE` - The number of commands to remember in the command  history
+   строка 1178/6175  
+   2. `ignoreboth` is shorthand for `ignorespace` and `ignoredups`,   
+       `ignorespace` - it causes lines which begin with  a  space  character to  not saved  in  the history list   
+       `ignoredups` - it causes lines matching the previous history entry to not be saved in  the history list
+9. { list; }  
+list is simply executed in the current shell environment.   list must  be  terminated with a newline or semicolon.  This is known as a group command.  The return status is  the  exit  status  of list.   Note that unlike the metacharacters ( and ), { and } are reserved words and must occur where a reserved word is permitted to  be  recognized.   Since they do not cause a word break, they must be separated from  list  by  whitespace  or  another  shell metacharacter.  
+Строка 343
+10. `touch {0..100000}.txt`  
+Создать 300000 файлов не получилось:  
+```
+$ touch {1..300000}.txt
+-bash: /usr/bin/touch: Argument list too long
+```
+11.`[[ -d /tmp ]]` checks if /tmp exists and is a directory
+12. ```
+    vagrant@vagrant:~$ type -a bash
+    bash is /usr/bin/bash  
+    bash is /bin/bash
+    vagrant@vagrant:~$ mkdir /tmp/new_path_directory
+    vagrant@vagrant:~$ cp /bin/bash /tmp/new_path_directory/
+    vagrant@vagrant:~$ type -a bash
+    bash is /usr/bin/bash
+    bash is /bin/bash
+    vagrant@vagrant:~$ PATH=/tmp/new_path_directory/:$PATH
+    vagrant@vagrant:~$ type -a bash
+    bash is /tmp/new_path_directory/bash
+    bash is /usr/bin/bash
+    bash is /bin/bash
+
+13. `at` -executes commands at a specified time.  
+`batch`- executes commands when system load levels permit; in other words, when the load  average  drops below 1.5, or the value specified in the invocation of atd.
+14. \+
