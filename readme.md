@@ -1,284 +1,132 @@
-# 2.4. Инструменты Git
+# Домашнее задание к занятию "3.2. Работа в терминале, лекция 2"
 
-1.Найдите полный хеш и комментарий коммита, хеш которого начинается на aefea.
+1. `cd` - это встроенная команда `bash`. `cd` переставляет указатель на текущую директорию. 
 
-    $ git log -1 --format="%H %s" aefea
-    aefead2207ef7e2aa5dc81a34aedf0cad4c32545 Update CHANGELOG.md
-
-2.Какому тегу соответствует коммит 85024d3?
-
-    $ git log -1 --format="%H %d" 85024d3
-    85024d3100126de36331c6982bfaac02cdab9e76  (tag: v0.12.23)
-
-3.Сколько родителей у коммита b8d720? Напишите их хеши.
-    
-$ git log -1 --format="%P" b8d720
-    56cd7859e05c36c06b56d013b55a252d0bb7e158 9ea88f22fc6269854151c571162c5bcf958bee2b
-
-4.Перечислите хеши и комментарии всех коммитов которые были сделаны между тегами v0.12.23 и v0.12.24.
-
-    $ git log --format="%H %s" v0.12.23..v0.12.24
-    33ff1c03bb960b332be3af2e333462dde88b279e v0.12.24
-    b14b74c4939dcab573326f4e3ee2a62e23e12f89 [Website] vmc provider links
-    3f235065b9347a758efadc92295b540ee0a5e26e Update CHANGELOG.md
-    6ae64e247b332925b872447e9ce869657281c2bf registry: Fix panic when server is unreachable
-    5c619ca1baf2e21a155fcdb4c264cc9e24a2a353 website: Remove links to the getting started guide's old location
-    06275647e2b53d97d4f0a19a0fec11f6d69820b5 Update CHANGELOG.md
-    d5f9411f5108260320064349b757f55c09bc4b80 command: Fix bug when using terraform login on Windows
-    4b6d06cc5dcb78af637bbb19c198faff37a066ed Update CHANGELOG.md
-    dd01a35078f040ca984cdd349f18d0b67e486c35 Update CHANGELOG.md
-    225466bc3e5f35baa5d07197bbc079345b77525e Cleanup after v0.12.23 release
-
-5.Найдите коммит в котором была создана функция func providerSource, ее определение в коде выглядит так func providerSource(...) (вместо троеточего перечислены аргументы).
-
-    $ git grep --heading -e 'func providerSource('
-    provider_source.go
-    func providerSource(configs []*cliconfig.ProviderInstallation, services *disco.Disco) (getproviders.Source, tfdiags.Diagnostics) {
-
-    $ git log --pretty=oneline -L :providerSource:provider_source.go 
-    
-    5af1e6234ab6da412fb8637393c5a17a1b293663 main: Honor explicit provider_installation CLI config when present
-    diff --git a/provider_source.go b/provider_source.go
-    --- a/provider_source.go
-    +++ b/provider_source.go
-    @@ -20,6 +23,15 @@
-    -func providerSource(services *disco.Disco) getproviders.Source {
-    -       // We're not yet using the CLI config here because we've not implemented
-      -       // yet the new configuration constructs to customize provider search
-      -       // locations. That'll come later. For now, we just always use the
-      -       // implicit default provider source.
-      -       return implicitProviderSource(services)
-    +func providerSource(configs []*cliconfig.ProviderInstallation, services *disco.Disco) (getproviders.Source, tfdiags.Diagnostics) {
-      +       if len(configs) == 0 {
-        +               // If there's no explicit installation configuration then we'll build
-        +               // up an implicit one with direct registry installation along with
-        +               // some automatically-selected local filesystem mirrors.
-        +               return implicitProviderSource(services), nil
-        +       }
-        + 
-        +       // There should only be zero or one configurations, which is checked by
-        +       // the validation logic in the cliconfig package. Therefore we'll just
-        +       // ignore any additional configurations in here.
-        +       config := configs[0]
-        +       return explicitProviderSource(config, services)
-    +}
-        +
-    
-    92d6a30bb4e8fbad0968a9915c6d90435a4a08f6 main: skip direct provider installation for providers available locally
-    diff --git a/provider_source.go b/provider_source.go
-    --- a/provider_source.go
-    +++ b/provider_source.go
-    @@ -19,5 +20,6 @@
-    func providerSource(services *disco.Disco) getproviders.Source {
-        // We're not yet using the CLI config here because we've not implemented
-        // yet the new configuration constructs to customize provider search
-    -       // locations. That'll come later.
-    -       // For now, we have a fixed set of search directories:
-    +       // locations. That'll come later. For now, we just always use the
-    +       // implicit default provider source.
-    +       return implicitProviderSource(services)
-    
-    8c928e83589d90a031f811fae52a81be7153e82f main: Consult local directories as potential mirrors of providers
-    diff --git a/provider_source.go b/provider_source.go
-    --- /dev/null
-    +++ b/provider_source.go
-    @@ -0,0 +19,5 @@
-    +func providerSource(services *disco.Disco) getproviders.Source {
-    +       // We're not yet using the CLI config here because we've not implemented
-    +       // yet the new configuration constructs to customize provider search
-    +       // locations. That'll come later.
-    +       // For now, we have a fixed set of search directories:
-
-6.Найдите все коммиты в которых была изменена функция globalPluginDirs.
-
-    $ git grep --heading -e 'func globalPluginDirs'
-    plugins.go
-    func globalPluginDirs() []string {
-
-    $ git log --pretty=oneline -L :globalPluginDirs:plugins.go
-    78b12205587fe839f10d946ea3fdc06719decb05 Remove config.go and update things using its aliases
-    diff --git a/plugins.go b/plugins.go
-    --- a/plugins.go
-    +++ b/plugins.go
-    @@ -16,14 +18,14 @@
-    func globalPluginDirs() []string {
-        var ret []string
-        // Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-    -       dir, err := ConfigDir()
-    +       dir, err := cliconfig.ConfigDir()
-        if err != nil {
-                log.Printf("[ERROR] Error finding global config directory: %s", err)
-        } else {
-                machineDir := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-                ret = append(ret, filepath.Join(dir, "plugins"))
-                ret = append(ret, filepath.Join(dir, "plugins", machineDir))
-        }
- 
-        return ret
-     }
-    
-    52dbf94834cb970b510f2fba853a5b49ad9b1a46 keep .terraform.d/plugins for discovery
-    diff --git a/plugins.go b/plugins.go
-    --- a/plugins.go
-    +++ b/plugins.go
-    @@ -16,13 +16,14 @@
-    func globalPluginDirs() []string {
-        var ret []string
-        // Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-        dir, err := ConfigDir()
-        if err != nil {
-                log.Printf("[ERROR] Error finding global config directory: %s", err)
-        } else {
-                machineDir := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-    +               ret = append(ret, filepath.Join(dir, "plugins"))
-                ret = append(ret, filepath.Join(dir, "plugins", machineDir))
-        }
- 
-        return ret
-    }
-    
-    41ab0aef7a0fe030e84018973a64135b11abcd70 Add missing OS_ARCH dir to global plugin paths
-    diff --git a/plugins.go b/plugins.go
-    --- a/plugins.go
-    +++ b/plugins.go
-    @@ -14,12 +16,13 @@
-    func globalPluginDirs() []string {
-        var ret []string
-        // Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-        dir, err := ConfigDir()
-        if err != nil {
-                log.Printf("[ERROR] Error finding global config directory: %s", err)
-        } else {
-    -               ret = append(ret, filepath.Join(dir, "plugins"))
-    +               machineDir := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-    +               ret = append(ret, filepath.Join(dir, "plugins", machineDir))
-            }
- 
-        return ret
-    }
-    
-    66ebff90cdfaa6938f26f908c7ebad8d547fea17 move some more plugin search path logic to command
-    diff --git a/plugins.go b/plugins.go
-    --- a/plugins.go
-    +++ b/plugins.go
-    @@ -16,22 +14,12 @@
-    func globalPluginDirs() []string {
-        var ret []string
-    -
-    -       // Look in the same directory as the Terraform executable.
-    -       // If found, this replaces what we found in the config path.
-    -       exePath, err := osext.Executable()
-    -       if err != nil {
-    -               log.Printf("[ERROR] Error discovering exe directory: %s", err)
-    -       } else {
-    -               ret = append(ret, filepath.Dir(exePath))
-    -       }
-    -
-        // Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-        dir, err := ConfigDir()
-        if err != nil {
-                log.Printf("[ERROR] Error finding global config directory: %s", err)
-        } else {
-                ret = append(ret, filepath.Join(dir, "plugins"))
-        }
- 
-        return ret
-    }
-    
-    8364383c359a6b738a436d1b7745ccdce178df47 Push plugin discovery down into command package
-
-    diff --git a/plugins.go b/plugins.go
-    --- /dev/null
-    +++ b/plugins.go
-    @@ -0,0 +16,22 @@
-    +func globalPluginDirs() []string {
-    +       var ret []string
-    +
-    +       // Look in the same directory as the Terraform executable.
-    +       // If found, this replaces what we found in the config path.
-    +       exePath, err := osext.Executable()
-    +       if err != nil {
-    +               log.Printf("[ERROR] Error discovering exe directory: %s", err)
-    +        } else {
-    +               ret = append(ret, filepath.Dir(exePath))
-    +       }
-    +  
-    +       // Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-    +       dir, err := ConfigDir()
-    +       if err != nil {
-    +               log.Printf("[ERROR] Error finding global config directory: %s", err)
-    +       } else {
-    +               ret = append(ret, filepath.Join(dir, "plugins"))
-    +       }
-    + 
-    +       return ret
-    +}
-    (END)
-
-7.Кто автор функции synchronizedWriters?
-
-    $ git log -S"func synchronizedWriters" --pretty=format:'%h %an %ad %s'
-    bdfea50cc James Bardin Mon Nov 30 18:02:04 2020 -0500 remove unused
-    5ac311e2a Martin Atkins Wed May 3 16:25:41 2017 -0700 main: synchronize writes to VT100-faker on Windows
-
-Автор в данном случае очевидно Martin Atkins, а James Bardin наоборот ее удалил
-
-# 3.1. Работа в терминале, лекция 1
-
-1. \+  
-2. Только с включенным vpn  
-
-    ```
-    $ curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -  
-    $ sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"  
-    $ sudo apt-get update && sudo apt-get install vagrant   
-    ```
-
-3. \+
-4. \+
-5. RAM:1024mb  
-CPU:2 cpu  
-HDD:64gb  
-video:4mb  
-6. добавить комманды в VagrantFile:  
+Если сделать ее внешней командой, то после перехода в нужную директорию, придется все равно запускать в ней новый bash 
+2. `grep qwerty test -c`
 ```
-  v.memory = 1024  
-  v.cpus = 2
+vagrant@vagrant:~$ cat >test
+kajdasi njdshu
+dsfjdskf qwerty
+qwerty hfhfhf45 jgugj
+qwer dzfnsdfj hghg
+qwerty12
+vagrant@vagrant:~$ grep qwerty test | wc -l
+3
+vagrant@vagrant:~$ grep qwerty test -c
+3
 ```
-7. \+
-8. Ознакомиться с разделами `man bash`, почитать о настройках самого bash: 
-   1. `HISTFILESIZE` - The maximum number of lines contained in the history file   
-      строка 1155/6175  
-   `HISTSIZE` - The number of commands to remember in the command  history
-   строка 1178/6175  
-   2. `ignoreboth` is shorthand for `ignorespace` and `ignoredups`,   
-       `ignorespace` - it causes lines which begin with  a  space  character to  not saved  in  the history list   
-       `ignoredups` - it causes lines matching the previous history entry to not be saved in  the history list
-9. { list; }  
-list is simply executed in the current shell environment.   list must  be  terminated with a newline or semicolon.  This is known as a group command.  The return status is  the  exit  status  of list.   Note that unlike the metacharacters ( and ), { and } are reserved words and must occur where a reserved word is permitted to  be  recognized.   Since they do not cause a word break, they must be separated from  list  by  whitespace  or  another  shell metacharacter.  
-Строка 343
-10. `touch {0..100000}.txt`  
-Создать 300000 файлов не получилось:  
+3. Какой процесс с PID `1` является родителем для всех процессов в вашей виртуальной машине Ubuntu 20.04?
 ```
-$ touch {1..300000}.txt
--bash: /usr/bin/touch: Argument list too long
+vagrant@vagrant:~$ pstree -p | grep \(1\)
+systemd(1)-+-VBoxService(839)-+-{VBoxService}(840)
 ```
-11.`[[ -d /tmp ]]` checks if /tmp exists and is a directory
-12. ```
-    vagrant@vagrant:~$ type -a bash
-    bash is /usr/bin/bash  
-    bash is /bin/bash
-    vagrant@vagrant:~$ mkdir /tmp/new_path_directory
-    vagrant@vagrant:~$ cp /bin/bash /tmp/new_path_directory/
-    vagrant@vagrant:~$ type -a bash
-    bash is /usr/bin/bash
-    bash is /bin/bash
-    vagrant@vagrant:~$ PATH=/tmp/new_path_directory/:$PATH
-    vagrant@vagrant:~$ type -a bash
-    bash is /tmp/new_path_directory/bash
-    bash is /usr/bin/bash
-    bash is /bin/bash
+4. Как будет выглядеть команда, которая перенаправит вывод stderr `ls` на другую сессию терминала?
 
-13. `at` -executes commands at a specified time.  
-`batch`- executes commands when system load levels permit; in other words, when the load  average  drops below 1.5, or the value specified in the invocation of atd.
-14. \+
+Терминал 1
+```
+vagrant@vagrant:~$ root ls -l /home/vagrant/ 2>/dev/pts/1
+```
+Терминал 2
+```
+vagrant@vagrant:~$ -bash: root: command not found
+```
+5. Получится ли одновременно передать команде файл на stdin и вывести ее stdout в другой файл? Приведите работающий пример.
+```
+vagrant@vagrant:~$ cat >5_in
+123
+vagrant@vagrant:~$ cat <5_in >5_out
+vagrant@vagrant:~$ cat 5_out 
+123
+```
+6. Получится ли находясь в графическом режиме, вывести данные из PTY в какой-либо из эмуляторов TTY? 
+Сможете ли вы наблюдать выводимые данные?
+
+Вывести получилось на своей рабочей машине.
+```
+$ tty 
+/dev/pts/2
+$ echo Follow white rabbit >/dev/tty3
+```
+Далее переключилась к терминалу 3: Ctrl+Alt+F3 и увидела там вывод команды
+7. Выполните команду `bash 5>&1`. К чему она приведет? Что будет, если вы выполните `echo netology > /proc/$$/fd/5`? Почему так происходит?
+
+`bash 5>&1` создает дескриптор 5 и перенаправляет вывод в него на stout. 
+`echo netology > /proc/$$/fd/5` выведет на устройство вывода слово netology. поскольку вывод с дескриптора 5 был перенаправлен в stout
+Если запустить только 2 команду, без предварительного запуска 1ой, то получим ошибку. поскольку такого дескриптора нет
+9. Получится ли в качестве входного потока для pipe использовать только stderr команды, не потеряв при этом отображение stdout на pty? Напоминаем: по умолчанию через pipe передается только stdout команды слева от `|` на stdin команды справа.
+Это можно сделать, поменяв стандартные потоки местами через промежуточный новый дескриптор, который вы научились создавать в предыдущем вопросе.
+
+1 вариант - перенаправляем stderr в stdout, а сам stdout перенаправляется в /dev/null. Но stderr все еще перенаправлен в stdout
+`command 2>&1 >/dev/null | grep 'something'` 
+ 
+2 вариант - с помощью промежуточного дескриптора
+```
+bash 6>&1
+command 6>&1 1>&2 2>&6
+```
+12. Что выведет команда `cat /proc/$$/environ`? Как еще можно получить аналогичный по содержанию вывод?
+
+Данная команда покажет переменные окружения.
+Похожий вывод дадут 
+* `env`
+* `printenv`
+
+13. Используя `man`, опишите что доступно по адресам `/proc/<PID>/cmdline`, `/proc/<PID>/exe`.
+```
+line 290
+/proc/[pid]/cmdline
+This read-only file holds  the  complete  command  line  for  the
+process,  unless  the  process  is a zombie.  In the latter case,
+there is nothing in this file: that is, a read on this file  will
+return  0  characters.  The command-line arguments appear in this
+file as a set of strings separated by null bytes ('\0'),  with  a
+further null byte after the last string.
+
+line 338
+/proc/[pid]/exe
+Under Linux 2.2 and later, this file is a symbolic link  contain‐
+ing  the  actual pathname of the executed command.  This symbolic
+link can be dereferenced normally; attempting  to  open  it  will
+open  the  executable.   You can even type /proc/[pid]/exe to run
+another copy of the same executable that is being run by  process
+[pid].  If the pathname has been unlinked, the symbolic link will
+contain the string '(deleted)' appended to the original pathname.
+In  a  multithreaded  process, the contents of this symbolic link
+are not available if the main thread has already terminated (typ‐
+ically by calling pthread_exit(3)).
+```
+14. Узнайте, какую наиболее старшую версию набора инструкций SSE поддерживает ваш процессор с помощью `/proc/cpuinfo`.
+
+sse4_2
+15. При открытии нового окна терминала и `vagrant ssh` создается новая сессия и выделяется pty. Это можно подтвердить командой `tty`, которая упоминалась в лекции 3.2. Однако:
+
+     ```bash
+     vagrant@netology1:~$ ssh localhost 'tty'
+     not a tty
+     ```
+
+     Почитайте, почему так происходит, и как изменить поведение.
+
+    * При открытии нового терминала и `vagrant ssh` дефолтная shell команда `bash -l` (https://www.vagrantup.com/docs/vagrantfile/ssh_settings)
+    * Поэтому в данному случае команды shell вызываются сначала из `/etc/profile`. После этого обращение идет к `/root/.profile` т.к. большинство команд vagrant запускается от рута. (https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Bash-Startup-Files)
+    * В Ubuntu в `/root/.profile` находится команда `mesg n` которая запрещает другим пользователям писать в его терминалы
+    * В общем случае это полезно. Но в случае vagrant польза не ясна.
+    * Чтобы обойти эту проблему я нашла несколько способов. Например, заменить `msg n`  на `tty -s && mesg n` в файле `/root/.profile`. Для проверки наличия устройства tty  
+16. Бывает, что есть необходимость переместить запущенный процесс из одной сессии в другую. Попробуйте сделать это, воспользовавшись `reptyr`. Например, так можно перенести в `screen` процесс, который вы запустили по ошибке в обычной SSH-сессии.
+Решить не удалось. Ругается на права 
+```
+vagrant@vagrant:~$ reptyr 2797
+Unable to attach to pid 2797: Operation not permitted
+The kernel denied permission while attaching. If your uid matches
+the target's, check the value of /proc/sys/kernel/yama/ptrace_scope.
+For more information, see /etc/sysctl.d/10-ptrace.conf
+
+```
+В файле `/etc/sysctl.d/10-ptrace.conf` заменила значение на `kernel.yama.ptrace_scope = 0`
+К сожалению это не помогло. 
+17. `sudo echo string > /root/new_file` не даст выполнить перенаправление под обычным пользователем, так как перенаправлением занимается процесс shell'а, который запущен без `sudo` под вашим пользователем. Для решения данной проблемы можно использовать конструкцию `echo string | sudo tee /root/new_file`. Узнайте что делает команда `tee` и почему в отличие от `sudo echo` команда с `sudo tee` будет работать.
+
+`tee` выводит данные одновременно в файл, указанный в качестве параметра, и в stdout, 
+В примере команда `tee` получается на stdin данные полученные через pipe от stdout команды `echo`.
+`tee` запущена от рута поэтому имеет права на запись в файл
