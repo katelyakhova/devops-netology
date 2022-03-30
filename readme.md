@@ -61,14 +61,20 @@ $ echo Follow white rabbit >/dev/tty3
 8. Получится ли в качестве входного потока для pipe использовать только stderr команды, не потеряв при этом отображение stdout на pty? Напоминаем: по умолчанию через pipe передается только stdout команды слева от `|` на stdin команды справа.
 Это можно сделать, поменяв стандартные потоки местами через промежуточный новый дескриптор, который вы научились создавать в предыдущем вопросе.
 
-1 вариант - перенаправляем stderr в stdout, а сам stdout перенаправляется в /dev/null. Но stderr все еще перенаправлен в stdout
-`command 2>&1 >/dev/null | grep 'something'` 
- 
-2 вариант - с помощью промежуточного дескриптора
 ```
-bash 6>&1
-command 6>&1 1>&2 2>&6
+vagrant@vagrant:~$ bash 6>&1
+vagrant@vagrant:~$ ls -lR 6>&1 1>&2 2>&6
+.:
+total 16
+-rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 0.txt
+-rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 1.txt
+-rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 2.txt
+-rw-rw-r-- 1 vagrant vagrant  4 Mar 25 19:25 5_in
+-rw-rw-r-- 1 vagrant vagrant  4 Mar 25 19:25 5_out
+-rw-rw-r-- 1 vagrant vagrant 78 Mar 27 19:32 hardcopy.0
+-rw-rw-r-- 1 vagrant vagrant 22 Mar 27 18:39 test
 ```
+
 
 9. Что выведет команда `cat /proc/$$/environ`? Как еще можно получить аналогичный по содержанию вывод?
 
@@ -122,17 +128,56 @@ sse4_2
     * Чтобы обойти эту проблему я нашла несколько способов. Например, заменить `msg n`  на `tty -s && mesg n` в файле `/root/.profile`. Для проверки наличия устройства tty  
 
 13. Бывает, что есть необходимость переместить запущенный процесс из одной сессии в другую. Попробуйте сделать это, воспользовавшись `reptyr`. Например, так можно перенести в `screen` процесс, который вы запустили по ошибке в обычной SSH-сессии.
-Решить не удалось. Ругается на права 
-```
-vagrant@vagrant:~$ reptyr 2797
-Unable to attach to pid 2797: Operation not permitted
-The kernel denied permission while attaching. If your uid matches
-the target's, check the value of /proc/sys/kernel/yama/ptrace_scope.
-For more information, see /etc/sysctl.d/10-ptrace.conf
+
+В файле `/etc/sysctl.d/10-ptrace.conf` заменила значение на `kernel.yama.ptrace_scope = 0`
+Сразу не сработало. После перезагрузки все получилось.
+Далее пример использования
 
 ```
-В файле `/etc/sysctl.d/10-ptrace.conf` заменила значение на `kernel.yama.ptrace_scope = 0`
-К сожалению это не помогло. 
+vagrant@vagrant:~$ top
+
+top - 18:47:09 up 13 min,  1 user,  load average: 0.00, 0.01, 0.00
+Tasks: 109 total,   1 running, 108 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem :    981.0 total,    383.0 free,    136.5 used,    461.5 buff/cache
+MiB Swap:   1962.0 total,   1962.0 free,      0.0 used.    700.4 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND  
+      1 root      20   0  103128  12744   8372 S   0.0   1.3   0:01.38 systemd  
+      2 root      20   0       0      0      0 S   0.0   0.0   0:00.00 kthreadd 
+      3 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 rcu_gp   
+      4 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 rcu_par+ 
+      6 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+ 
+      8 root      20   0       0      0      0 I   0.0   0.0   0:00.10 kworker+ 
+      9 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 mm_perc+ 
+     10 root      20   0       0      0      0 S   0.0   0.0   0:00.07 ksoftir+ 
+     11 root      20   0       0      0      0 I   0.0   0.0   0:00.15 rcu_sch+ 
+     12 root      rt   0       0      0      0 S   0.0   0.0   0:00.00 migrati+ 
+     13 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+ 
+     14 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/0  
+     15 root      20   0       0      0      0 S   0.0   0.0   0:00.00 cpuhp/1  
+     16 root     -51   0       0      0      0 S   0.0   0.0   0:00.00 idle_in+ 
+     17 root      rt   0       0      0      0 S   0.0   0.0   0:00.21 migrati+ 
+     18 root      20   0       0      0      0 S   0.0   0.0   0:00.05 ksoftir+ 
+     20 root       0 -20       0      0      0 I   0.0   0.0   0:00.00 kworker+ 
+[1]+  Stopped                 top
+vagrant@vagrant:~$ bg
+[1]+ top &
+vagrant@vagrant:~$ 
+
+
+[1]+  Stopped                 top
+vagrant@vagrant:~$ disown top
+-bash: warning: deleting stopped job 1 with process group 1596
+
+reptyr 1596
+vagrant@vagrant:~$ top
+
+top - 18:47:09 up 13 min,  1 user,  load average: 0.00, 0.01, 0.00
+Tasks: 109 total,   1 running, 108 sleeping,   0 stopped,   0 zombie
+
+``` 
+Запущенный процесс успешно переместился
 
 14. `sudo echo string > /root/new_file` не даст выполнить перенаправление под обычным пользователем, так как перенаправлением занимается процесс shell'а, который запущен без `sudo` под вашим пользователем. Для решения данной проблемы можно использовать конструкцию `echo string | sudo tee /root/new_file`. Узнайте что делает команда `tee` и почему в отличие от `sudo echo` команда с `sudo tee` будет работать.
 
