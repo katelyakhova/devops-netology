@@ -62,17 +62,8 @@ $ echo Follow white rabbit >/dev/tty3
 Это можно сделать, поменяв стандартные потоки местами через промежуточный новый дескриптор, который вы научились создавать в предыдущем вопросе.
 
 ```bash
-vagrant@vagrant:~$ bash 6>&1
-vagrant@vagrant:~$ ls -lR 6>&1 1>&2 2>&6
-.:
-total 16
--rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 0.txt
--rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 1.txt
--rw-rw-r-- 1 vagrant vagrant  0 Mar 19 19:32 2.txt
--rw-rw-r-- 1 vagrant vagrant  4 Mar 25 19:25 5_in
--rw-rw-r-- 1 vagrant vagrant  4 Mar 25 19:25 5_out
--rw-rw-r-- 1 vagrant vagrant 78 Mar 27 19:32 hardcopy.0
--rw-rw-r-- 1 vagrant vagrant 22 Mar 27 18:39 test
+vagrant@vagrant:~$ ls -l /root 6>&2 2>&1 1>&6 | grep denied
+ls: cannot open directory '/root': Permission denied
 ```
 
 
