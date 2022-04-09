@@ -6,6 +6,40 @@
     * предусмотрите возможность добавления опций к запускаемому процессу через внешний файл (посмотрите, например, на systemctl cat cron),
     * удостоверьтесь, что с помощью systemctl процесс корректно стартует, завершается, а после перезагрузки автоматически поднимается.
 
+------------
+
+**Доработка по заданию 1**
+
+**Q:** Предлагаю уточнить как именно в службу будут передаваться дополнительные опции. Примеры можно посмотреть вот здесь:
+www.freedesktop.org...ExecStart=
+unix.stackexchange.com...unit-files
+stackoverflow.com...-unit-file
+Замечу, что речь идёт не о переменных окружения, а об опциях (параметрах) запуска службы.
+
+**A:** Изменила конфигурационный файл node_exporter и добавила EnvironmentFile
+```bash
+vagrant@vagrant:~$ cat /etc/sysconfig/node_exporter
+OPTIONS="--collector.cpu.info"
+vagrant@vagrant:~$ cat /etc/systemd/system/node_exporter.service 
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+EnvironmentFile=/etc/sysconfig/node_exporter
+ExecStart=/usr/local/bin/node_exporter $OPTIONS
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Здесь ключ `--collector.cpu.info` включает метрику `cpu_info`
+
+-----------------
+
 Конфигурационный файл:
 ```bash
 vagrant@vagrant:/tmp$ systemctl cat node_exporter.service
